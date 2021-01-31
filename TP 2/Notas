@@ -1,0 +1,121 @@
+PREPARACIÓN DE DATOS PARA DATA MINING
+Entender los datos:
+ - Ver su relevancia para el problema. 
+ - Ver la calidad de los datos: analizar si el número de entradas es suficiente para que los resultados sean confiables. Luego, ver el número de variables. Si son demasiadas, se puede usar selección o extracción de variables. Regla clásica: Se quiere tener 10 o más datos por cada variable. También se tiene que ver el desbalance entre las clases.
+
+Formateo de datos:
+ - Identificar los datos faltantes y cómo están simbolizados. Si el modelo no se aguanta valores faltantes, podemos ignorar entradas con datos faltantes (si las líneas con datos faltantes son pocas), ignorar las variables si son poco útiles y tienen mucha proporción faltantes, tratar los faltantes con un valor particular (en cuyo caso hay que ver qué valor darle), o usar imputation, que es llenarlo con un valor no extremo, como la mediana o media (posiblemente usando la media por clase de los datos o algo así)
+ - Hay que pensar a las fechas en un formato uniforme y coherente. Se puede usar Unix system date (número de segundos desde una fecha dada) pero eso es más confuso de seguir y propenso a errores. Otra opción es KSP, que usa el año más la fracción del año que lleva como valor. Este último formato preserva intervalos razonablemente y es más fácil de analizar.
+ - Las variables categóricas deberían pasarse a numéricas. Para variables binarias, pueden convertirse a 0 y 1, o -1 y 1 . Los datos ordinales (clasificaciones discretas pero que mantienen un orden) se debería convertir a números que preserven el orden natural y la escala (en caso de que estén escalados)
+ - La variables nominales (discretas sin orden) con pocos valores se pueden convertir en N variables con todas las clasificaciones en las que una sola está en 1 y todas las demás están en 0. Si hay muchos valores, se trata de amoldarlo a uno con pocos valores. Por ejemplo, los Estados de US se pueden agrupar en regiones y reducirlo de 50 a algo del orden de 5. También puede dejarse como categorías los más frecuentes, y a los pocos ajenos dejarlos en una categoría como "Otros".
+ - Las variables cíclicas (aquellas codificadas como un número pero que son circulares, como las horas del día o un ángulo) se pueden convertir en dos variables tipo coordenadas (x,y) en un círculo.
+ - El proceso inverso implica discretizar algunas variables continuas pues algunos algoritmos usan valores discretos. Pueden usarse bins del mismo ancho. El problema es que esto puede generar aglutinamiento si los datos están agrupados o tienen una escala dispersa. Otra opción es usar bins de igual altura, con lo cual los bins tendrán anchos distintos. También puede usarse eso como una primera distribución y después se ajustan los bins a valores informativos o más claros.
+ - Una cuestión importante es si hay que normalizar los datos para que todos estén en escalas más o menos similares, para evitar que algunas categorías dominen la distancia entre dos puntos. Una básica es normalizar todo en el intervalo [0,1] . A eso se lo llama normalización min-max. Sin embargo, esto es susceptible a outliers si tengo un mínimo o un máximo muy corridos con respecto a la mayoría de los datos. Una más usado es usar normalización z-score. Para eso, a un valor se lo convierte restándole la media y dividiendo por el desvío estándar.
+
+Outliers:
+ - Normalmente un valor que esté fuera de 2 veces la distancia intercuartil desde los cuartiles 1 y 3 se lo considera un outlier. Opciones para lidiar con outliers son: no hacer nada (si los valores extremos son importantes para el análisis de datos), forzar límites y acotar outliers a esos valores extremos, o hacer binning (no de igual ancho).
+
+Variables útiles:
+ - Usualmente se remueven campos con ninguna variación (siempre) o muy poca variación (algunas veces)
+ - Un falso predictor es un campo correlacionado con el target de mi modelado pero que no sirve para predecir. Un ejemplo típico: La nota final de un alumno predice perfectamente el estado de aprobación del curso. Hay que eliminar los falsos predictores pues nuestro modelo tiende a predecir eso en vez de la variable que nos importa. 
+
+Clases desbalanceadas:
+ - En algunos casos las clases tienen muy diferentes frecuencias de aparición, como análisis de transacciones fraudulentas. Se puede tratar de cambiar la proporción de casos para llevar el desbalance a algo más soportable, sobresampleando la clase minoritaria o subsampleando la mayoritaria. También puede usarse estrategias más inteligentes para considerar sólo las partes que sirven de la clase mayoritaria (descartando casos demasiado obvios o poco informativos)
+
+"Garbage in, Garbage out": Es fundamental preparar los datos adecuadamente para poder obtener buenos resultados
+
+
+
+
+VISUALIZACIÓN DE DATOS
+- La visualización proporciona soporte de la exploración interactiva, dada la capacidad humana de reconocimiento de patrones y de análisis visual. También ayuda a la presentación de resultados. Como desventaja, pueden llevar a confusiones o presentar datos de manera engañosa. 
+- Principios de buenas visualizaciones: darle al observador el mayor número de ideas en el menor tiempo con la menor cantidad de tinta y espacio.
+- La mayoría de los métodos de visualización se usan para un primer análisis exploratorio de los datos.
+
+Visualización en 1D
+ - Dot plot, con puntos en un eje
+ - Histograma
+ - Box plot
+ - Los outliers molestan para la representación: molestan la escala en un scatter plot, hacen bins raros en histogramas y cosas así.
+
+Visualización en 2D
+ - Scatter plot. A veces se necesitan otros métodos ya que demasiados puntos tienden a saturar el gráfico, impidiendo visualizar información útil
+ - Gráficos de contornos, que muestran las zonas de cierta densidad. Esto es útil cuando se tienen muchos datos concentrados.
+
+Visualización en 3D
+ - Gráficos de las tres dimensiones con ejes x, y, z.
+ - Heat maps, que hace un gráfico bidimensional y usa un código de color para visualizar la tercera variable.
+
+Comentarios sobre gráficos para analizar datos
+ - Usualmente se pueden ver histogramas o boxplots de las distintas variables una por una para analizar si hay outliers y si las distribuciones son razonables.
+ - Sin embargo, ver variables en múltiples dimensiones puede ayudar a detectar valores anómalos que no siguen el patrón de correlaciones entre variables.
+
+Visualización en más dimensiones:
+ - Vistas múltiples: Se muestran cada variable por separado, como un histograma de cada una. Sin embargo, como dijimos antes esto no muestra correlaciones.
+ - Scatterplot. Esto muestra los gráficos para todos los pares de variables. Muy útil para ver correlaciones dos a dos, pero no se ven los efectos multivariados.
+ - Parallel Coordinates: Pone cada variable en un valor distinto (fijo) del eje horizontal. Los valores se ponen en la vertical de la variable correspondiente, y se unen con líneas los valores que corresponden a la misma entrada. No es tan fácil seguir patrones, pero se pueden visualizar y encontrar algunos detalles.
+ - Chernoff Faces: Codifica las diferentes variables en características de la cara humana. Aprovecha la capacidad humana de encontrar fácilmente pequeñas diferencias entre caras. 
+ - Star Plot: Cada variable va en una dirección angular diferente. Cada punto forma una "constelación" usando trazos en la dirección correspondiente y con largo proporcional a su valor.
+
+
+
+
+PROYECCIONES 
+PCA, Principal Components Analysis:
+ - Suponemos que tenemos un dataset centrado (medias 0 en sus dimensiones) y queremos encontrar una representación de esos datos en un espacio de menor dimensión. Usualmente esto sirve para poder visualizarlos, pero también hay modelos que tienen problemas de dimensionalidad y se beneficiarían de una proyección con menos dimensiones.
+ - Lo que caracteriza a los datos en problemas de múltiples dimensiones es la distancia entre puntos. No importa tanto cuánto valen ciertas cosas, sino tener una noción razonable de similitud de entradas. Nos gustaría una proyección lineal que preserve lo más posible la estructura de los datos (su relación de distancias)
+ - Una buena proyección es aquella que minimiza la diferencia entre los valores originales y sus proyecciones
+ - PCA es muy útil en la detección de outliers. 
+
+
+
+
+SELECCIÓN DE VARIABLES
+Muchos problemas actuales tienen cientos o miles de variables medidas. Modelar esos problemas directamente suele ser subóptimo tanto en calidad como en interpretabilidad.
+Cuando tengo tantas variables, la proyección y extracción de variables puede no ser viable pues las proyecciones siguen necesitando todas las variables, con lo que no tengo una real ganancia.
+Razones para seleccionar variables:
+ - Por una cuestión de performance, pues la dimensionalidad puede ser un problema en muchos problemas de modelado, además de que muchas variables pueden agregar ruido. Nuestro modelo puede ser más fuerte teniendo menos variables. Esta razón ya no es tan relevante pues los métodos modernos son tolerantes al problema de dimensionalidad.
+ - Para descubrir cuáles son las variables realmente importantes en el problema, lo cual aporta descubrimientos útiles en el trabajo de dicho problema. También permite interpretar correlación, corregulación e independencia de variables.
+
+Métodos de selección de variables:
+ - Univariados (consideran de a una variable para determinar su utilidad) o multivariados (consideran subconjuntos de variables al mismo tiempo)
+ - Filtros (ordenan las variables de acuerdo a un criterio de importancia independientemente de la predicción) o wrappers (usan el predictor final para evaluar la utilidad de las variables)
+Los filtros suelen ser univariados mientras que los wrappers suelen ser multivariados
+
+Realizar una búsqueda exhaustiva en las posibles combinaciones de variables tiene dos problemas. El primero es la explosión combinatoria de los casos, lo que usualmente lo vuelve computacionalmente inviable. Aún así, un segundo inconveniente es que hacer pruebas exhaustivas puede llevar a falsos predictores en casos en las que una combinación tiene valores óptimos por sobreajuste.
+
+Métodos de Filtro:
+ - Elige las variables usando algún criterio de "importancia". Se puede establecer un criterio de filtro por el que las variables pueden pasar o no. En la práctica usualmente se mide una propiedad de cada variable, que suele ser un criterio distinto del que use el clasificador para conseguir dos posibles rankings. Luego, se ordena a las variables según el criterio y de retiene a las más importantes, lo cual también requiere definir un criterio de corte.
+ - Pueden usarse como un primer paso de selección dada su velocidad. Luego, se usa algo más robusto para hilar más fino.
+ - Un test paramétrico (uno que asuma la distribución de los datos) tiene mayor poder de separación en caso de que la presunción sea correcta, y es el que debería usarse si se conoce la distribución. Sin embargo, puede no dar buenos resultados si la presunción es equivocada, por lo que debería usarse un test no paramétrico en caso de que se desconozca la forma de los datos. Pasa lo mismo en la inversa, con un test no paramétrico no obteniendo distinciones tan grandes como lo haría uno específico a la distribución.
+
+Métodos de Wrappers:
+ - Los métodos univariados no pueden resolver algunos problemas que están fuertemente relacionados a la interrelación de las variables. Múltiples variables por separado pueden ser inútiles para resolver un problema, mientras que su combinación aporta información muy útil.
+ - Para seleccionar las mejores variables para modelas, resuelvo el problema modelado con posibles subconjuntos y conservar la mejor solución. La búsqueda completa es exponencialmente larga, así se deben usar heurísticas de búsqueda.
+Búsquedas greedy:
+ - Forward search: Se comienza la búsqueda con el conjunto vacío. Luego, se construyen los posibles clasificadores que usan una variable y se conserva el que obtenga el mejor error. El proceso se repite agregando una variable cada vez. Luego, se obtiene un camino desde el clasificador sin variables hasta el que usa todas. A partir de ahí, se los compara y usa al mejor. También puede acotarse hasta cierta cantidad de variables. Una variante es la floating search, en la que se dan X pasos para adelante e Y para atrás (un ejemplo sería X=2 e Y=1)
+ - Backward search: Se hace lo mismo que con forward pero arrancando desde todas las variables y quitando de a una. También aplica usar floating search.
+La búsqueda forward no evalúa muchas combinaciones de variables. Gran parte del camino queda condicionado a partir de las decisiones locales que se toman al principio. La búsqueda backward suele ser mejor pues considera los grupos de variables que hacen depender fuertemente la solución desde un principio. Sin embargo, no es tan útil cuando se quiere encontrar grupos pequeños y óptimos de variables.
+
+Comparación de ambos métodos:
+ - Tanto filtros como wrappers son heurísticas.
+ - Los filtros son muy rápidos, por los que son útiles para reducir problemas inmensos.
+ - Los filtros no resuelven el problema de modelado directamente, ni pueden analizar correctamente problemas que tengan variables fuertemente relacionadas.
+ - Los wrappers dan mejores selecciones al costo de ser mucho más pesados.
+ - A su vez, como evalúan muchos conjuntos de combinaciones de variables, suelen llevar a tomar conjuntos no óptimos, dado el overfitting.
+
+Los wrappers backward parecerían ser potencialmente los mejores métodos de selección. Sin embargo, son computacionalmente muy pesados por la construcción de modelos y la cantidad de combinaciones que se prueban. La solución ideal sería un método backward basado directamente en el modelo final, pero más eficiente.
+
+Métodos embebidos:
+ - Lo que necesitamos conocer para movernos eficientemente es la derivada del error respecto de cada variable. Sin embargo, como es muy difícil conseguir eso, podríamos intentar tener alguna aproximación para usarla en cada paso. Si la función error es razonablemente suave, dar el paso en la dirección del máximo descenso de la derivada debería ser lo mismo que el máximo descenso del error.
+Recursive Feature Elimination:
+ - Se basa en ajustar un modelo a los datos y rankear las variables usando una medida interna de importancia, siendo más importante la que empeora al modelo al ser eliminada. Cada paso consiste en construir mi modelo, ordenar mi conjunto de variables usándolo, eliminar la menos importante y repetir ese paso hasta no tener variables.
+ - Para SVM, un método para conocer la importancia de las variables es conseguir el vector perpendicular al hiperplano de separación y luego medir las magnitudes de cada componente del mismo. Las variables que tienen un mayor valor son más importantes para separar que las que tienen menores valores.
+ - Es importante tener las variables escaladas en RFE para que tengan sentido las medidas usuales de relevancia de cada una.
+ - Un problema con RFE ocurre cuando tenemos múltiples variables importantes pero correlacionadas. Cuando la interrelación entre N variables divide bien, ellas "comparten" la importancia, con lo cual todas son menos importantes de lo que deberían ser. Entonces, cuál se elimina y cuál se usa a veces termina siendo chance, lo que vuelve el proceso un poco inestable.
+ - Los métodos embebidos son rápidos, efectivos, entendibles y más estables que los wrappers greedy. Sin embargo, la importancia de variables se estima en vez de medirse directamente, sumado a problemas de inestabilidad con variables correlacionadas.
+
+Evaluar las selecciones:
+ - Resulta útil tener idea de cómo cambia el error de predicción de mi modelo al eliminar variables. La idea base consiste en aplicar algún método de selección al problema y controlar el error mientras se van eliminando variables. Luego, usamos el mínimo. En un principio, se podría usar cross-validaton para determinar el error. El problema con esto es que se estarían usando los mismos datos para medir el error de predicción así como para elegir la validez de las clases. "Elegir variables es como construir el clasificador" ya que guía el proceso de búsqueda, con lo cual es importante usar otro conjunto de variables para poder tener estimaciones correctas durante el proceso.
+ - Procedimiento para evaluar las selecciones: partir los datos en training, validación y test. Para cada subconjunto de variables se entrena un modelo en el training set. Luego, se toma el subconjunto que muestra la mejor performance en el validation set. Para mejorar esta estimación, se puede usar cross validation entre estos dos sets. Luego, puede medirse el error verdadero en el test set.
+

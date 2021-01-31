@@ -1,0 +1,58 @@
+MÉTODOS DE ENSAMBLES
+Un ensamble es un conjunto grande de modelos que se usan juntos como un "meta modelo". La idea base consiste en usar conocimiento de distintas fuentes al tomar decisiones.
+Ejemplos de la vida real incluyen:
+ - Comité de expertos (todos tienen alto conocimiento sobre el mismo tema y votan). En términos de ML, los ensambles planos corresponden a este tipo (bagging, boosting, random forest).
+ - Gabinete de asesores (expertos con conocimiento alto en distintas áreas, donde la cabeza de un tema toma las decisiones que le corresponden). En ML esto se corresponde con los ensambles divisivos.
+Ambas estructuras poseen un método para seleccionar o construir los miembros y un método para combinar sus decisiones en una global.
+
+
+Ensambles divisivos
+Se basan en dividir el problema en una serie de subproblemas con mínima sobreposición. Son útiles para atacar problemas grandes con subproblemas separados. Requieren una función que decida qué clasificador tiene que actuar. 
+El problema con este tipo de ensambles es que dependen de un primer clasificador, cuyos errores en asignación no pueden ser resueltos por los clasificadores del nivel más bajo.
+
+
+Ensambles planos
+Utilizan muchos expertos, todos siendo lo mejor posible individualmente. De lo contrario, usualmente no obtienen buenos resultados. 
+Sin embargo, se necesita que los expertos opinen distinto en algunos casos. Se necesita que sean muy buenos individualmente, pero lo más diversos posibles. Si no, no tendría sentido usar muchos y podríamos quedarnos con uno solo.
+
+En este tipo de modelos, hay que tener cuidado con el problema de sesgo-varianza. Usando muchos modelos muy rígidos (de ahí la parte de sesgo), sus soluciones no van a ser muy distintas entre sí y los modelos resultantes serán muy estables, pero tendrán problemas en ciertas partes irregulares del problema o que no se ajusten bien al fuerte sesgo que ellos aplican. Por otro lado, está el problema de la varianza si se permite que los modelos sean demasiado flexibles y sobreajusten, con lo cual se tienen modelos que ajusten muy bien a sus datos puntuales pero son muy distintos entre sí. Es decir, las funciones rígidas dan muy buenas estimaciones de los parámetros óptimos al costo de una baja flexibilidad. Por otro lado, las funciones flexibles tienen un buen ajuste pero tiene una mala estimación de los parámetros óptimos.
+Posibles formas de resolver este dilema:
+ - Disminuir la varianza de los predictores sin sesgo, construyendo muchos predictores y promediándolos (usado en Bagging y Random Forest)
+ - Reducir el sesgo de los predictores estables, construyendo una secuencia tal que la combinación tenga menos sesgo (usado en Boosting)
+
+
+BAGGING
+Consiste en usar predictores buenos pero inestables, como árboles o redes neuronales. 
+Para conseguir diversidad, propone perturbar los datos. Dada su inestabilidad, los pequeños cambios en los datos hacen que los modelos sean bastante diferentes. Su idea es usar bootstraps, muestras al azar de los datos de la misma longitud pero con repetición. Una propiedad importante del bootstrap es que no introduce bias en ninguna estadística (la media no se ve afectada, por ejemplo).
+Para regresión o ranking, se propone un promedio simple de las predicciones de todos los modelos como decisión final. 
+Para clasificación, podría hacerse:
+ - Tomar la clase con mayor cantidad de votos.
+ - Cada modelo estima la probabilidad de cada clase. Dichas probabilidades se promedian y luego se elige la de mayor. Esto sirve para tomar en cuenta la confianza de los clasificadores en sus votos.
+Para clustering, se construye una matriz que cuenta cuántas veces cada par de puntos termina en el mismo cluster, y clusterizamos esa matriz de similitud.
+Un parámetro importante para elegir es la cantidad total de predictores a utilizar. Sin embargo, los errores de entrenamiento y test convergen suavemente conforme aumenta el número de predictores, con lo cual usar números grandes (al menos del orden de 500) es suficiente.
+Usar un ensamble de bagging con clasificadores estables no nos da una ganancia real ya que casi todos los modelos van a ser iguales. Una característica importante para Bagging entonces es la inestabilidad del método subyacente.
+Variantes para variar los datos incluyen:
+ - Subsampling de los datos (lo cual es bastante equivalente al bootstrapping). Los resultados son muy similares siendo más eficiente en la selección de datos
+ - Agregar ruido, como ya hemos hablado
+ - Variar los modelos en vez de los datos. Podrían modificarse los parámetros de aprendizaje para los métodos, lo cual obtendría resultados diferentes mientras se usan todos los datos. El ejemplo más interesante de este es cambiar la condición inicial para redes neuronales, así que en vez de elegir la de menor error se pueden aprovechar su variabilidad. Para redes, este método es el más óptimo en procesamiento y obtiene buenos resultados en general.
+
+
+RANDOM FOREST
+Random Forest es una evolución conceptual de Bagging para generar más diversidad. Usar bootstraps genera diversidad, pero los árboles siguen estando muy correlacionados. Usualmente las mismas variables tienden a ocupar los primeros cortes, por lo que los árboles resultantes tenían bases muy similares.
+La solución propuesta es agregar azar al crecimiento. Para ello, en cada nodo de cada árbol se selecciona un grupo chico de variables al azar y se evalúa sólo esas variables. Esta idea no agrega sesgo pues a la larga todas las variables entran en juego. Además, agrega varianza, pero eso se soluciona fácil promediando muchos modelos. Esta idea resulta efectiva para decorrelacionar árboles.
+Esta idea construye árboles hasta separar todos los puntos: sin podado ni criterio de parada. La cantidad de variables que se elijan al azar es importante, y usualmente la raíz cuadrada de la cantidad total de variables suele ser bueno. Un detalle interesante es que si se usan todas las variables, recuperamos el método de Bagging. El número de árboles no es importante, siempre y cuando sean muchos (del orden de 500, 1000, 2000, ...).
+Random Forest viene con tres "subproductos", o herramientas adicionales:
+ - Out-of-bag estimation: Al hacer bootstrap, hay puntos que quedan afuera (puntos out-of-bag). En media son un tercio del total de los datos. Como para cada predictor hay un conjunto OOB que no se usó en el entrenamiento, se los puede usar para estimar errores de predicción sin sesgo. Entonces, para cada punto se forma un ensamble con los clasificadores que no lo usaron en entrenamiento y predigo solamente usando esos. Esto resulta una buena estimación del error de test. Además, como están calculadas con un ensemble más chico en cada caso, usualmente sobreestiman los errores de clasificación, lo cual es bueno de tener.
+ - Estimación de importancia de las variables: Para esto existen dos criterios posibles. El primero es Gini, que calcula un índice de utilidad de cada variable en las divisiones y lo promedia entre todos los árboles (las variables útiles reducen el Gini mucho más). El segundo es Randomization, convirtiendo una variable en ruido al desordenarla completamente, y se promedia cuánto modifica las predicciones del ensamble usando los datos OOB. Los dos métodos se estiman fácilmente y suelen tener resultados equivalentes.
+ - Gráficas de proximidad: Es un modo interno de este algoritmo de proyectar datos en bajas dimensiones (como PCA). Lo hace calculando una matriz de distancias entre los datos basada en cuántas veces los puntos terminan en el mismo nodo de un árbol, considerando que puntos cercanos deberían terminar juntos más seguido. Luego, hace un MDS de esas distancias.
+
+
+BOOSTING
+La pregunta fundamental para este modelo es si es posible conseguir una solución de error arbitrariamente chico en cualquier problema (stronglearner) como una combinación de varios modelos que sean apenas mejores que elegir al azar (weaklearner). Entonces, la idea central es contruir una secuencia de clasificadores débiles, donde cada uno aprenda un poco de lo que le falta a la secuencia previa. Como los clasificadores débiles pueden mejorar un poco en cualquier problema, la secuencia converge a error cero.
+Para los conjuntos de entrenamiento, se trabaja con bootstraps, como en bagging. Sin embargo, en la muestra no se toma con pesos estadísticos uniformes. Se busca poner énfasis en aprender los puntos que fueron mal clasificados previamente por el ensamble. Para eso, se le aumenta el peso estadístico a los errores, y se le disminuye a los aciertos.
+Para combinar los votos de los clasificadores, se hace una suma de votos, como en Bagging. Sin embargo, en dicha suma se le da más peso a los clasificadores que son mejores.
+Se puede probar que el error sobre los datos de ajuste converge a cero si el weaklearn de verdad puede siempre hacer algo mejor que el azar. Sin embargo, aunque el error de entrenamiento tienda a cero, el clasificador se va volviendo más complejo a cada paso, con lo cual se espera que esto sobreajuste. Aún así, el modelo en general no sobreajusta. El error de test incluso sigue bajando aunque el error de entrenamiento ya esté en 0.
+Una posible explicación de ese fenómeno viene de la teoría del margen. El error en test sólo mide si se acertó con la clase, pero lo que realiza el algoritmo es más complejo, pues es la suma pesada de votos por una clase y la otra. Por ende, hay que tener en cuenta la "fuerza" de cada respuesta. Para eso se define el margen de cada decisión, que es la fracción pesada de votos correctos menos la fracción incorrecta de las decisiones. Luego, se demostró que un mayor margen es equivalente a una menor cota superior en el error de test y que boosting incrementa en cada iteración el margen de los datos. Por ende, el error en test baja porque boosting aumenta el margen.
+Otros enfoques explican de maneras diferentes el mismo proceso: Boosting logra disminuir la cota superior del error en test conforme sigue iterando.
+Boosting tiene el mejor funcionamiento para clasificación binaria, pero se lo ha extendido (aunque sin resultados tan buenos en la práctica) para regresión, clasificación múltiple y ranking.
+Boosting tiene resultados de orden similar a Bagging, pero para redes neuronales no se desempeña tan bien. Esto se debe a que las redes son demasiado flexibles para el requerimiento de boosting de tener clasificadores rígidos.

@@ -1,0 +1,88 @@
+CLUSTERING
+Un cluster es un agrupamiento de objetos. Definimos conceptualmente como grupo a un conjunto de objetos que son muy similares entre sí pero diferente de los demás. Esto requiere una métrica que nos dé una idea de similitud entre objetos.
+La idea intuitiva del problema de clustering refiere a, dados un conjunto de datos y una métrica, encontrar una partición de los objetos tal que los que estén en el mismo grupo son similares, y los demás son distintos a ellos.
+El objetivo de esta práctica es principalmente descubrir información sobre los datos. Es decir, resulta interesante encontrar "grupos naturales" en un conjunto de datos del que no se conocen las clases, además de encontrar jerarquías de similaridad en los datos (taxonomía). También permite resumir los datos al encontrar "prototipos" que sean representativos de un conjunto grande de ejemplos.
+Clustering no es una práctica de clasificación. Es un aprendizaje no supervisado en el que se conocen los datos pero no los grupos en que están organizados. El objetivo es encontrar la organización. Es decir, clasificación se centra en encontrar una regla que separe los datos con las clases que ya conozco, mientras que clustering trata de asignar etiquetas a los grupos que los divida razonablemente.
+Hay dos clases de algoritmos de clustering: los divisivos, que consideran el clustering como una partición del espacio y busca la partición más significativa en un número fijo de subconjuntos, mientras que el jerárquico busca una anidación de particiones de la que luego puede extraerse una cantidad dada de partes. 
+Las representaciones usuales de los datos para clustering vienen en dos formas: los datos vectoriales en una matriz o una matriz de distancias. En el primero tenemos dos modos de los datos (filas y columnas), mientras que en el segundo tenemos un único modo (se usan las variables tantos para filas como columnas).
+Las métricas pueden definirse de muchas formas. Para datos binarios, ordinales o categóricos de pueden definir medidas especiales. En general, es razonable que sean siempre positivas y que respeten la desigualdad triangular.
+Asignarle distintos pesos (escalas) a las variables de los datos permite que algunas dominen la métrica, lo cual nos puede dar resultados muy distintos.
+El algoritmo de clustering general consiste en definir una métrica para poder calcular todas las distancias entre datos. Luego, se define una medida de bondad del clustering. Por último, se minimiza la medida de bondad, normalmente con alguna heurística.
+
+
+
+Clustering divisivo, K-means
+El algoritmo más viejo y base para estos métodos es K-means. El objetivo es encontrar una partición de los datos en k grupos tal que la distancia media dentro de los puntos de cada grupo sea mínima. Se buscan clusters compactos, con lo que al minimizar la distancia dentro del grupo se maximiza la distancia entre grupos.
+Una noción similar a buscar minimizar la distancia media entre los puntos del cluster es buscar que se minimice la suma de distancias al centro del cluster, donde el centro de un cluster es el vector medio de todos los puntos que lo componen. Esta segunda noción es mucho más simple de resolver que la primera, por lo que la adoptaremos de ahora en adelante.
+La función de costo total depende de dos factores: qué centro de cluster se le asigna a cada punto y la distancia que tiene dicho punto al centro correspondiente. Es sencillo notar que la asignación que minimiza el costo total es la que a cada punto le da el centro más cercano.
+De otra manera, si los clusters ya están datos, determinamos que el centro que minimiza la suma de distancias es el punto medio de los vectores (el centroide).
+Un proceso para poder realizar la minimización de la función de costo consiste en una minimización alternada. Primero, defino un conjunto de centros al azar (usualmente buscando mínimo y máximo de cada variable). Luego, etiqueto los datos con respecto al centro del cluster que tienen más cercano. Una vez que tengo eso, redefino las posiciones de cada centro en función de los puntos de su cluster y repito el procedimiento. Se puede demostrar que iterar este procedimiento hace que la suma de distancias descienda siempre. Esta iteración tiende a un mínimo local de la función en tiempo finito.
+Los criterios de parada involucran llegar a un punto en el que no hay cambios o que se tiene un cambio cíclico en un conjunto mínimo de puntos.
+Este método es lineal en el número de entradas y que tiene garantía de convergencia a un mínimo local. 
+Sin embargo, esta condición de que caiga en mínimos locales es su mayor problema. Una idea para solucionar esto es realizar varias corridas en múltiples lugares y se queda con la mejor. Notar que en esta solución no hay overfitting, pues no voy a generalizar nada a partir de estos datos sino que justamente estoy buscando la solución más apretada para estos datos específicamente. Es decir, no hay problema en hacer mil corridas y quedarme con la mejor. 
+Su segundo problema es que depende fuertemente de los outliers. Una posible modificación es usar una medida más resistente a los outliers, como usar la mediana de las distancias en vez de la distancia media. 
+Un tercer problema es que sólo vale en espacios vectoriales. El método se basa en recorrer el espacio con las posiciones de los puntos. Si tuviéramos sólo las distancias entre puntos, no podemos resolver el problema con esta implementación de K-means.
+
+K-medoids
+Este método combate los problemas que mencionamos de K-means. Se basa en representar a cada cluster por su medoid, que es el centro geométrico de la distribución. Es decir, es el punto de la distribución que esté más cerca de todos los demás a la vez. Por ende, estamos usando un punto de los datos y no uno inexistente. La iteración se realiza de una manera similar que en K-means. 
+De esta forma, se soluciona el problema de los outliers y vale para espacios arbitrarios, no necesariamente vectoriales. El problema de los mínimos locales se mantiene pues el método de búsqueda es el mismo.
+El precio que se paga en este algoritmo es que ahora tiene una complejidad cuadrática con respecto a la cantidad de entradas en los datos.
+
+
+Clustering jerárquico
+Hay problemas con jerarquías naturales en los datos, como las taxonomías naturales. También puede resultar interesante encontrar una estructura en niveles en los datos.
+En este tipo de métodos se busca organizar los datos en una serie de particiones anidadas. En cada nivel, los datos son más similares entre sí que si se los compara con los de otros grupos.
+La representación usual son los dendogramas: diagramas de divisiones que representan las categorías basándose en el grado de similitud. Las líneas verticales representan el grado de similitud de las clases que se muestran horizontalmente. Otro tipo de representación es usando un diagama de Venn, aunque son menos utilizados.
+
+El problema de encontrar estos clusters tiene dos posibles estrategias:
+ - Top-Down o Divisiva. Es muy poco usada. COmienza con todos los puntos en un cluster único y en cada paso divide todos los clusters en dos partes de acuerdo a un criterio a optimizar. Eventualmente termina con todos los puntos separados. 
+ - Bottom-Up o Aglomerativa. Realiza el proceso inverso, comenzando con todos los puntos separados y uniendo los dos clusters más similares según algún criterio en cada paso.
+Para realizar un método divisivo, en cierta forma se requiere un método que me permita hacer clusters grandes, entonces estaría necesitando otro método que me realice un clustering de los datos que estoy dividiendo. Sin embargo, en el caso de necesitar pocos clusters de muchos datos, puede resultar útil.
+Por otro lado, el método aglomerativo tiene un procedimiento más natural y sólo requiere una noción de distancia para poder hacerse. Sin embargo, necesitamos una noción de similitud entre clusters, no entre puntos.
+
+Medidas de similitud más comunes:
+ - Single Linkage: La medida de distancia entre dos clusters es la mínima distancia entre todos los pares de puntos que pertenecen a clusters distintos. Este método busca una alta conectividad, no grupos compactos. Entonces, se encuentra una continuiudad espacial más que grupos apretados. Entonces, en cierta forma este método construye un minimum spanning tree de los datos usando el algoritmo de Prim. Este método es muy dependiente de outliers, con lo que no se pueden encontrar pocos clusters muy poblados, sino que usualmente los últimos valores que se unen en el top level son outliers. También es ineficiente al tener que comparar todos los puntos entre sí múltiples veces. Además, se construye sobre errores previos y no revisa asignaciones anteriores con lo que no se puede corregir.
+ - Complete Linkage: Acá se toma una noción inversa, pues se toma como medida de distancia la distancia máxima entre todos los pares de puntos que pertenecen a dos clusters diferentes. Esto agrupa "conjuntos completamente vecinos", por lo que resulta en grupos compactos, estilo K-means. Es dependiente de outliers (de una forma diferente). Es parecido a K-means pero es determinista. Sin embargo, es ineficiente y no corrige errores previos como como Single Linkage, además de no poder formar clusters con formas arbitrarias.
+ - Average Linkage: Usa la medida promedio entre todos los pares de puntos de clusters diferentes. Da una solución intermedia a la de los dos anteriores, buscando grupos tanto conectados como compactos. Da soluciones distintas a K-means.
+ - Criterio de Ward: Busca los clusters que al juntarlos dan el menor aumento en la suma de distancia cuadrada entre sus componentes. Usualmente da resultados equivalentes a K-means, pero da toda la jerarquía. Si queremos una cantidad pequeña de clusters, es preferible usar K-means directamente.
+
+
+
+Resumen de ambos tipos de métodos de clustering
+En la gran mayoría de las aplicaciones se usa alguno de ambos métodos. Ambos son heurísticas simples sin gran teoría por detrás. Resultan fáciles de implementar y en la práctica los dos dan resultados razonables muchas veces. A su vez, sirven de base para métodos más elaborados.
+"En clustering, uno encuentra lo que busca, no necesariamente lo que hay." Es decir, uno siempre va a encontrar la mejor solución para lo que busca la heurística utilizada (por ejemplo, los grupos más compactos o los grupos con mayor continuidad espacial). Cada método de clustering parte de imponer una estructura, encontrando lo mejor posible a lo que estén buscando. Si la premisa del método es adecuada para el problema, en general el resultado es bueno. No existen algoritmos que puedan resolver dos "clases de problemas" diferentes de manera correcta.
+
+
+
+Estabilidad
+El problema de estabilidad radica en buscar la cantidad de clusters que deben usarse en un problema. En algunos problemas la cantidad es fija y está dada en el problema, pero en la mayoría no pues estamos estudiando si hay una estructura que los aglomere. Lamentablemente, los algoritmos de clustering siempre devuelven una solución aunque no tenga sentido. El número de clusters es otra información que deberíamos extraer de los datos.
+La cantidad de clusters en un dataset es una pregunta difícil pues no hay "verdad" contra la que comparar y los métodos no poseen una fuerte teoría detrás. Por ende, la mayoría de los métodos son empíricos y no presentan reales garantías pero han sido probados útiles en la práctica.
+
+Método del salto:
+Un criterio general para evaluar la calidad de la solución es la suma de las distancias dentro de cada cluster. Eso es lo que busca minimizarse en la mayoría de los métodos. Sin embargo, agregar clusters siempre se reduce la suma de las distancias, por lo que no podemos buscar un mínimo. Más allá de eso, decrece más cuando se separan dos clusters verdaderos que si divide en dos un "cluster natural". Entonces, hay que buscar un cambio repentino de pendiente en la gráfica de la suma de distancias en función del número de clusters. Este método no suele ser una medida confiable usada directamente, además de que no detecta la ausencia de clusters.
+
+Gap Statistic:
+Intenta resolver los problemas del método del salto. La idea consiste en comparar la curva anterior con la curva que da una distribución uniforme. Se busca cuantificar el salto al buscar la primer diferencia significativa entre las dos curvas, la del problema que se está estudiando con el salto que da en el mismo caso una distribución uniforme. Si se diferencian adecuadamente, determinamos que hay clusters. Se busca la primera cantidad de clusters en la que hay una diferencia significativa.
+Para generar la referencia contra la que compararemos, hay dos formas:
+ - Tomar una distribución uniforme que ocupe el mismo hiper-rectángulo que la original
+ - Hacer lo mismo pero sobre un PCA de los datos
+
+Método de la estabilidad:
+La idea base es que los resultados científicos tienen que ser reproducibles. Los "clusters naturales" de un problema se tienen que encontrar siempre. Si cambiamos un punto del problema y la solución desaparece, entonces no son clusters naturales sino un resultado ficticio creado por el algoritmo.
+La idea base del algoritmo es, variando la cantidad de clusters, construir muchas soluciones replicadas (leves modificaciones en los datos), evaluar la estabilidad de las soluciones y seleccionar el k con mayor estabilidad.
+Como muchos algoritmos son deterministas, es necesario generar soluciones replicadas que generen problemas perturbados. Sin embargo, hay un trade-off al perturbar: si cambiamos mucho podemos destruir la estructura natural, mientras que si cambiamos poco puede parecer una solución estable aunque no lo sea.
+Métodos para generar réplicas:
+ - Subsample: Tomar una muestra al azar de los datos originales. Usualmente se toma entre el 70% y el 90%.
+ - Agregar ruido: Se agrega ruido blanco (normal) a los datos originales con un bajo porcentaje de la señal (menos del 10%)
+ - Proyecciones: En datos de alta dimensionalidad, tomar proyecciones sobre un subespacio elegido al azar.
+Una vez que los datos están perturbados, se usa siempre el mismo algoritmo, buscando que la única variación sean los datos. Luego, debe medirse cuán diferentes son las soluciones. 
+Cuando se evalúan dos soluciones que usen los mismos datos, existen distintas fórmulas que realizan esto, pero la noción básica en los métodos es considerar si cada par de puntos que están en el mismo cluster en una solución permanecen en la otra.
+Cuando se evalúa sobre conjuntos que tienen datos distintos, hay dos opciones:
+ - Contraer: Evaluar solamente sobre la intersección de ambos conjuntos, que tiene sentido si la muestra es grande, pues las pérdidas de información se vuelven más relevantes. Esta solución es más sencilla y más utilizada.
+ - Extender: Se agregan los puntos faltantes a cada solución obtenida previamente. Por ejemplo, para k-means se asigna el centro más cercano, mientras que en Single Linkage asigno el cluster de su primer vecino espacial.
+Luego, tenemos una muestra de los valores de similaridad entre las soluciones para distintos k. La evaluación más simple es quedarse con el que tenga la media máxima de estabilidad, pero no es necesariamente el valor más correcto. Una segunda opción es mirar la concentración del histograma de las distribuciones. Lo que se propone para esta idea es quedarse con la solución estable con la mayor cantidad de clusters posibles.
+Este método es que asume que las soluciones naturales tienen que ser estables. El problema es que lo contrario no está garantizado, algunas soluciones artificiales pueden ser estables también.
+
+
+Resumen de estabilidad
+Gap y el método de estabilidad son dos heurísticas muy usadas. La primera compara la bondad de la solución frente a una distribución nula, mientras que la segunda asume que las soluciones naturales tienen que ser estables. Aún así, ambos métodos son útiles para determinar la ausencia de clusters.
